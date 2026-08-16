@@ -9,9 +9,6 @@ export const cachePath = '/cache'
 export const databaseFile = `${databasePath}/filebrowser.db`
 export const configFile = `${configPath}/config.yaml`
 
-// Written by the sidegrade migration before Quantum first rewrites the database.
-export const preQuantumBackup = `${databaseFile}.pre-quantum`
-
 export const adminUsername = 'admin'
 
 // Matches the File Browser package's default, so a switch does not silently

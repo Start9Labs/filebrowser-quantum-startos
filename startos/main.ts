@@ -29,9 +29,9 @@ export const main = sdk.setupMain(async ({ effects }) => {
       exec: {
         command: sdk.useEntrypoint(),
         env: {
-          // The package takes its own snapshot in the sidegrade migration.
-          // Quantum's built-in backup is rewritten once per converted user, so
-          // on a multi-user database it is not a pre-migration snapshot.
+          // Quantum copies the database once per converted user, so on a
+          // multi-user database its "backup" holds partly-converted state
+          // under a name that looks authoritative.
           FILEBROWSER_DISABLE_AUTOMATIC_BACKUP: 'true',
         },
       },

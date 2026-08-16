@@ -25,12 +25,12 @@ Note the Docker Hub namespace is **`gtstef`**, not `gtsteffaniak`; the latter is
 
 Edit `startos/manifest/index.ts` and set `dockerVersion`, then bump `version` in `startos/versions/current.ts` — keeping the `#quantum:` flavor prefix — and rewrite `releaseNotes`.
 
-The `-stable` suffix belongs **only** in the image tag. ExVer parses it as a prerelease, so `1.5.2-stable:0` would sort *below* `1.5.2:0`.
+The `-stable` suffix belongs **only** in the image tag. ExVer parses it as a prerelease, so `1.5.2-stable:0` would sort _below_ `1.5.2:0`.
 
 Two things must move with it:
 
 - **`.satisfies(...)`** on `current`. The alias makes this flavored version acceptable to the eight packages that depend on `filebrowser` with unflavored ranges. Keep it at the latest published unflavored File Browser version.
-- **`migrations.other['^2']`** — the sidegrade edges to and from the unflavored line. Sidegrade edges live on whichever version is current; drop them and this flavor becomes unreachable from File Browser.
+- **`migrations.other['^2']`** — the sidegrade edge from the unflavored line. Sidegrade edges live on whichever version is current; drop it and this flavor becomes unreachable from File Browser. Do not add a matching `down`: the switch is one-way by design.
 
 Check the config schema against the tag you are pinning (`backend/config.yaml` and `frontend/public/config.generated.yaml` in the repo) rather than the docs site, which documents the unreleased 2.x schema. `startos/fileModels/config.yaml.ts` pins every key as a literal, so a renamed key fails closed rather than silently reverting to a default.
 

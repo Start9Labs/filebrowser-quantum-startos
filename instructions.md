@@ -22,7 +22,7 @@ If you already run File Browser, this is the same marketplace listing — open i
 
 Access rules also have to be recreated, and File Browser's shell commands are gone for good — the developer removed them on purpose.
 
-Take a StartOS backup before switching. The package also keeps its own copy of your old database, so switching back to File Browser restores the accounts you had at the moment you switched — though anything you changed in Quantum in the meantime, like new users, is lost. Your files are never affected either way.
+**Take a StartOS backup before switching.** The switch is one-way — File Browser is no longer maintained, so StartOS will not let you go back to it. If you change your mind later, restoring that backup is the only way to run File Browser again. Your files themselves are not at risk either way; what the backup protects is your user accounts and settings.
 
 ## Getting set up
 
