@@ -14,6 +14,10 @@ export const preQuantumBackup = `${databaseFile}.pre-quantum`
 
 export const adminUsername = 'admin'
 
+// Matches the File Browser package's default, so a switch does not silently
+// change how long sessions last.
+export const defaultSessionHours = 12
+
 // Quantum runs as uid 1000 and fsyncs a probe file into cacheDir on every
 // start, treating an I/O error there as fatal.
 export const chownCommand: [string, ...string[]] = [

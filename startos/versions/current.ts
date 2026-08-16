@@ -1,15 +1,27 @@
 import { VersionInfo } from '@start9labs/start-sdk'
 import * as fs from 'fs/promises'
+import { configYaml } from '../fileModels/config.yaml'
 import { storeJson } from '../fileModels/store.json'
 
 const databaseFile = '/media/startos/volumes/database/filebrowser.db'
 const preQuantumBackup = `${databaseFile}.pre-quantum`
+const legacySettings = '/media/startos/volumes/config/settings.json'
 
 async function exists(path: string): Promise<boolean> {
   return fs.stat(path).then(
     () => true,
     () => false,
   )
+}
+
+// File Browser stored this as a duration string; Quantum wants whole hours.
+// Its own action only ever wrote `<n>h`, so anything else keeps the default.
+async function legacySessionHours(): Promise<number | undefined> {
+  const raw = await fs
+    .readFile(legacySettings, 'utf-8')
+    .then(JSON.parse, () => undefined)
+  const hours = /^(\d+)h$/.exec(raw?.tokenExpirationTime ?? '')?.[1]
+  return hours ? Number(hours) : undefined
 }
 
 export const current = VersionInfo.of({
@@ -64,6 +76,10 @@ Vous gagnez par ailleurs une recherche instantanée sur un index de vos fichiers
         up: async ({ effects }) => {
           if ((await exists(databaseFile)) && !(await exists(preQuantumBackup)))
             await fs.copyFile(databaseFile, preQuantumBackup)
+
+          const tokenExpirationHours = await legacySessionHours()
+          if (tokenExpirationHours)
+            await configYaml.merge(effects, { auth: { tokenExpirationHours } })
 
           // The converted database carries the user's existing credentials, so
           // there is nothing for them to set.

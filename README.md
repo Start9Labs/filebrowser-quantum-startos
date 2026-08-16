@@ -176,6 +176,7 @@ interfaces:
   ui: { type: ui, port: 80 }
 actions:
   - set-admin-password
+  - set-expiration
 tasks:
   - { action: set-admin-password, severity: critical }
 health_checks:

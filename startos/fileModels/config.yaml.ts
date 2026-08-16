@@ -1,6 +1,12 @@
 import { FileHelper, z } from '@start9labs/start-sdk'
 import { sdk } from '../sdk'
-import { cachePath, databaseFile, dataPath, uiPort } from '../utils'
+import {
+  cachePath,
+  databaseFile,
+  dataPath,
+  defaultSessionHours,
+  uiPort,
+} from '../utils'
 
 const loggingSchema = z.object({
   levels: z.literal('info|warning|error').catch('info|warning|error'),
@@ -22,11 +28,17 @@ const serverSchema = z.object({
   logging: z.array(loggingSchema).catch(() => [loggingSchema.parse({})]),
 })
 
-// No `auth` block: setting auth.adminPassword makes Quantum reset the admin
-// user's password on every start, which would undo both the migrated password
-// and anything the user later chooses.
+// `tokenExpirationHours` is the only key this package may write under `auth`.
+// Emitting `adminPassword` — even as an empty string or null — arms a check
+// that resets the admin user's password on every start, undoing both the
+// password migrated from File Browser and anything the user later chooses.
+const authSchema = z.object({
+  tokenExpirationHours: z.number().int().min(1).catch(defaultSessionHours),
+})
+
 const shape = z.object({
   server: serverSchema.catch(() => serverSchema.parse({})),
+  auth: authSchema.catch(() => authSchema.parse({})),
 })
 
 export const configYaml = FileHelper.yaml(

@@ -19,8 +19,15 @@ const dict = {
   Username: 10,
   Password: 11,
 
+  // actions/setExpiration.ts
+  'Session Timeout': 12,
+  'The length of time (in hours) before a browser session will be automatically terminated': 13,
+  hours: 14,
+  'Set Session Timeout': 15,
+  'Determine how long a browser session lasts before it is automatically terminated': 16,
+
   // init/watchCredentials.ts
-  'Create your admin user password': 12,
+  'Create your admin user password': 17,
 } as const
 
 /**

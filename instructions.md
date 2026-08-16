@@ -51,3 +51,5 @@ WebDAV is served at `/dav` on the same address as the web interface, so you can 
 ### Actions
 
 **Set Admin Password** — generates a new random password for the `admin` account. Use it on a fresh install, or any time you want to rotate the credential. FileBrowser Quantum must be stopped to run it, because it holds a lock on its database while running.
+
+**Set Session Timeout** — how many hours you stay signed in before your browser session ends and you have to log in again. Defaults to 12 hours. If you switched from File Browser, your existing setting is carried over. Changing it restarts the service, which signs everyone out once.
