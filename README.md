@@ -1,134 +1,183 @@
 <p align="center">
-  <img src="icon.svg" alt="Hello World Logo" width="21%">
+  <img src="icon.svg" alt="FileBrowser Quantum Logo" width="21%">
 </p>
 
-# Hello World on StartOS
+# FileBrowser Quantum on StartOS
 
-> **Upstream repo:** <https://github.com/Start9Labs/hello-world>
+> Everything not listed in this document should behave the same as upstream
+> FileBrowser Quantum. If a feature, setting, or behavior is not mentioned
+> here, the upstream documentation is accurate and fully applicable — see the
+> Documentation section of `instructions.md` for links.
 
-A minimal reference service for StartOS. It displays a simple web page — nothing more. Use [this repository](https://github.com/Start9Labs/hello-world-startos) as a template when packaging a new service for StartOS.
-
-## Getting Started
-
-To learn how to use this template to create your own StartOS service package, see the [Packaging Guide](https://docs.start9.com/packaging).
+FileBrowser Quantum is a maintained fork of [File Browser](https://github.com/filebrowser/filebrowser), adding an indexed search, richer previews, per-folder access control and WebDAV. Upstream: <https://github.com/gtsteffaniak/filebrowser>.
 
 ---
 
 ## Table of Contents
 
+- [Package Identity and Flavor](#package-identity-and-flavor)
 - [Image and Container Runtime](#image-and-container-runtime)
 - [Volume and Data Layout](#volume-and-data-layout)
-- [Installation and First-Run Flow](#installation-and-first-run-flow)
-- [Configuration Management](#configuration-management)
-- [Network Access and Interfaces](#network-access-and-interfaces)
-- [Actions (StartOS UI)](#actions-startos-ui)
-- [Backups and Restore](#backups-and-restore)
-- [Health Checks](#health-checks)
+- [File Models](#file-models)
 - [Dependencies](#dependencies)
+- [Network Access and Interfaces](#network-access-and-interfaces)
+- [Installation and First-Run Flow](#installation-and-first-run-flow)
+- [Actions](#actions)
+- [Tasks](#tasks)
+- [Health Checks](#health-checks)
+- [Backups and Restore](#backups-and-restore)
 - [Limitations and Differences](#limitations-and-differences)
-- [What Is Unchanged from Upstream](#what-is-unchanged-from-upstream)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
 - [Quick Reference for AI Consumers](#quick-reference-for-ai-consumers)
 
 ---
 
+## Package Identity and Flavor
+
+This package shares the `filebrowser` package id with `filebrowser-startos`, and distinguishes itself with the ExVer flavor `#quantum`. The two therefore appear in the marketplace as one listing with a flavor picker, and the install button reads **Switch** rather than Install when the other flavor is present. This is the same arrangement Bitcoin Core and Bitcoin Knots use under the `bitcoind` id.
+
+Flavored and unflavored versions are _incomparable_, not ordered — `ExtendedVersion::partial_cmp` returns `None` across flavors. Two consequences follow, and both are deliberate:
+
+- Quantum never appears on the Updates page for a File Browser install. The switch is something the user chooses, which is correct here because it widens permissions on restricted accounts (see Limitations).
+- A flavored version satisfies none of the dependents' unflavored version ranges on its own. `.satisfies('2.63.23:0')` on the current version declares an alias that does, so the eight packages that depend on `filebrowser` need no changes.
+
+The sidegrade edges live in `migrations.other` under the `^2` key. Without them the flavor would be an island: `canMigrateFrom` would not cover the 2.x line, and StartOS would reject the switch as an unsatisfiable range rather than running it as an update.
+
 ## Image and Container Runtime
 
-| Property      | Value                                  |
-| ------------- | -------------------------------------- |
-| Image         | `ghcr.io/start9labs/hello-world`       |
-| Architectures | x86_64, aarch64, riscv64               |
-| Command       | `hello-world`                          |
+One prebuilt upstream image, run in a single subcontainer named `filebrowser-sub`.
 
----
+|                |                      |
+| -------------- | -------------------- |
+| Image id       | `filebrowser`        |
+| Upstream image | `gtstef/filebrowser` |
+| Architectures  | `x86_64`, `aarch64`  |
+| Subcontainer   | `filebrowser-sub`    |
+| Runs as        | uid 1000             |
+
+The upstream Docker namespace is `gtstef`, not `gtsteffaniak` — `hub.docker.com/v2/repositories/gtsteffaniak/filebrowser` is a 404. GHCR mirrors the same digests under the full name.
+
+`FILEBROWSER_DISABLE_AUTOMATIC_BACKUP` is set. Quantum otherwise copies the database to `.bak` during conversion, but takes that copy _inside_ the per-user loop, so on a multi-user database the final `.bak` already contains partially-migrated users. The package makes its own snapshot instead — see Backups and Restore.
 
 ## Volume and Data Layout
 
-| Volume | Mount Point | Purpose         |
-| ------ | ----------- | --------------- |
-| `main` | `/data`     | Persistent data |
+Four volumes. The first three are inherited from `filebrowser-startos` and must keep their ids and mountpoints, because a switch reuses them in place.
 
----
+| Volume     | Mount       | Contents                                                                |
+| ---------- | ----------- | ----------------------------------------------------------------------- |
+| `data`     | `/srv`      | The user's files. **Eight sibling packages mount this volume by name.** |
+| `database` | `/database` | `filebrowser.db`, plus the pre-switch snapshot                          |
+| `config`   | `/config`   | Generated `config.yaml` and the package store                           |
+| `cache`    | `/cache`    | Search index, thumbnails, generated icons                               |
 
-## Installation and First-Run Flow
+`cache` is new relative to File Browser. `server.cacheDir` defaults to the relative string `tmp`, which resolves against the process working directory and would land the search index on ephemeral storage, rebuilding it on every restart. It must be set to an absolute path on a real volume.
 
-No special setup. Install and start — the web page is immediately available.
+Quantum writes nothing into `/srv` — verified by diffing the tree across a full run including indexing. That matters because the volume is shared with other packages.
 
----
+## File Models
 
-## Configuration Management
+| Model            | Path                   | Purpose                                            |
+| ---------------- | ---------------------- | -------------------------------------------------- |
+| `config.yaml.ts` | `/config/config.yaml`  | The upstream config file                           |
+| `store.json.ts`  | `/config/startos.json` | Package state — whether an admin credential exists |
 
-No configurable settings. The service runs with no user-facing configuration.
-
----
-
-## Network Access and Interfaces
-
-| Interface | Port | Protocol | Purpose              |
-| --------- | ---- | -------- | -------------------- |
-| Web UI    | 80   | HTTP     | Hello World web page |
-
-**Access methods:**
-
-- LAN IP with unique port
-- `<hostname>.local` with unique port
-- Tor `.onion` address
-- Custom domains (if configured)
-
----
-
-## Actions (StartOS UI)
-
-None.
-
----
-
-## Backups and Restore
-
-**Included in backup:**
-
-- `main` volume
-
-**Restore behavior:** Volume is fully restored before the service starts.
-
----
-
-## Health Checks
-
-| Check         | Method              | Messages                                                           |
-| ------------- | ------------------- | ------------------------------------------------------------------ |
-| Web Interface | Port listening (80) | Success: "The web interface is ready" / Error: "The web interface is not ready" |
-
----
+Every field in `config.yaml` is a `z.literal`: the file is fully package-owned and there is nothing in it for the user to choose. Notably it contains **no `auth` block**. Setting `auth.adminPassword` makes Quantum reset that user's password on _every_ start, which would both destroy a migrated password and prevent the user from ever changing their own.
 
 ## Dependencies
 
 None.
 
----
+## Network Access and Interfaces
+
+| Interface | Type | Port |
+| --------- | ---- | ---- |
+| `ui`      | ui   | 80   |
+
+Port 80, not File Browser's 8080 — that is Quantum's default and the package follows it. WebDAV is served on the same port under `/dav`.
+
+## Installation and First-Run Flow
+
+**Switching from File Browser.** The `^2` up-migration snapshots the existing database to `filebrowser.db.pre-quantum`, then marks the admin credential as already present. Quantum converts the database in place on first start. Users, password hashes and the admin flag all survive; the user signs in with the credentials they already had, and no task is raised.
+
+**Fresh install.** No migration runs, so the store is empty and a `critical` task blocks startup until the user runs **Set Admin Password**. This also forecloses upstream's `quickSetup`, which would otherwise create an admin whose password is literally `admin`.
+
+## Actions
+
+| Action               | When to run                                              | Effect                                                                  |
+| -------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `set-admin-password` | At install on a fresh setup, or to rotate the credential | Generates a password and applies it with the upstream CLI. Repeat-safe. |
+
+Only available while stopped: Quantum holds an exclusive lock on the database while running, and the CLI reports `the database is locked` against a live server. The action runs the CLI in a temporary subcontainer, so the password is never written to package state.
+
+## Tasks
+
+| Task                 | Severity | Raised when                                                            |
+| -------------------- | -------- | ---------------------------------------------------------------------- |
+| `set-admin-password` | critical | The store has no admin credential — i.e. a fresh install, not a switch |
+
+## Health Checks
+
+The `primary` daemon's `ready` check requests `GET /health` and expects 200. The endpoint is registered on both the authenticated and public routers, so it needs no credentials. It reflects "HTTP server up" rather than "indexing finished".
+
+## Backups and Restore
+
+`data`, `database` and `config` are backed up by direct volume sync. `cache` is excluded — the search index, thumbnails and generated icons are all rebuilt on demand.
+
+The `database` volume also carries `filebrowser.db.pre-quantum`, the snapshot taken by the up-migration before Quantum first rewrote the database. It is written once and never overwritten, so it always represents the state at the moment of the switch. The `^2` down-migration restores it, which is what makes switching back to File Browser possible at all — 2.x cannot read the converted database.
 
 ## Limitations and Differences
 
-1. **No meaningful functionality** — this is a reference/template package only
+- **Per-user folder restrictions do not survive the switch.** File Browser stored a single `scope` string per user; Quantum reads a `scopes[]` list, finds it absent, and assigns the source's default of `/`. An account confined to a subfolder can afterwards list the entire shared volume. Every restricted account must be re-checked after switching. This is upstream behavior, reproduced and verified.
+- **Existing share links break.** The records migrate and the hashes still resolve, but the content 404s because File Browser shares carry no source name, and they do not appear in the admin share list, so they cannot be cleaned up from the UI.
+- **Access rules do not carry over.** Upstream documents this as intended; they must be recreated.
+- **Shell commands and runners are gone.** Upstream removed them deliberately and says they will not return.
+- **Switching back loses Quantum-era account changes.** The down-migration restores the pre-switch database, so users, passwords and shares revert to their state at the moment of the switch. Files on the `data` volume are untouched either way.
+- The 2.x line is beta and not packaged. It replaces BoltDB with SQLite and its migration path silently strips the admin flag from a File Browser database; upstream recommends 1.5.x for production.
 
----
+## Troubleshooting
 
-## What Is Unchanged from Upstream
+**Startup fails with `cacheDir failed to create test file: permission denied`.** The `cache` volume is not owned by uid 1000. Quantum writes and fsyncs a 10 MB probe file into `cacheDir` on every start and treats any I/O error there as fatal. The `chown` oneshot covers it; check its log line.
 
-The service is identical to upstream. There are no modifications.
+**Startup fails with `could not open database: permission denied`.** Same cause on the `database` volume. Note the File Browser database ships mode `0640`, so world-readable is not enough — it genuinely needs the uid.
+
+**Browsing works but every write returns 403.** `/srv` is still root-owned. Same oneshot.
+
+**A user who was restricted to one folder can now see everything.** Expected — see Limitations.
+
+To inspect the running container: `start-cli package attach filebrowser -n filebrowser-sub -- <cmd>`.
+
+## Contributing
+
+Build and development workflow follow the StartOS packaging guide: <https://docs.start9.com/packaging>. Keep `README.md`, `instructions.md`, and `AGENTS.md` in sync with any change to user-visible behavior or package structure.
 
 ---
 
 ## Quick Reference for AI Consumers
 
 ```yaml
-package_id: hello-world
-image: ghcr.io/start9labs/hello-world
-architectures: [x86_64, aarch64, riscv64]
+package_id: filebrowser
+flavor: quantum
+image: gtstef/filebrowser
+architectures: [x86_64, aarch64]
+subcontainers: [filebrowser-sub]
 volumes:
-  main: /data
-ports:
-  ui: 80
+  data: /srv
+  database: /database
+  config: /config
+  cache: /cache
+file_models:
+  - /config/config.yaml
+  - /config/startos.json
+startos_managed_env_vars:
+  - FILEBROWSER_DISABLE_AUTOMATIC_BACKUP
 dependencies: none
-startos_managed_env_vars: none
-actions: none
+interfaces:
+  ui: { type: ui, port: 80 }
+actions:
+  - set-admin-password
+tasks:
+  - { action: set-admin-password, severity: critical }
+health_checks:
+  - primary
 ```

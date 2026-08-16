@@ -1,20 +1,26 @@
 import { setupManifest } from '@start9labs/start-sdk'
 import { long, short } from './i18n'
 
+const dockerImage = 'gtstef/filebrowser'
+const dockerVersion = '1.5.2-stable'
+
 export const manifest = setupManifest({
-  id: 'hello-world',
-  title: 'Hello World',
-  license: 'MIT',
-  packageRepo: 'https://github.com/Start9Labs/hello-world-startos',
-  upstreamRepo: 'https://github.com/Start9Labs/hello-world',
-  marketingUrl: 'https://start9.com/',
-  donationUrl: 'https://donate.start9.com/',
+  id: 'filebrowser',
+  title: 'FileBrowser Quantum',
+  license: 'Apache-2.0',
+  packageRepo: 'https://github.com/Start9Labs/filebrowser-quantum-startos',
+  upstreamRepo: 'https://github.com/gtsteffaniak/filebrowser',
+  marketingUrl: 'https://filebrowserquantum.com/',
+  donationUrl: null,
   description: { short, long },
-  volumes: ['main'],
+  // `data` is load-bearing: eight sibling packages mount it by name.
+  volumes: ['data', 'database', 'config', 'cache'],
   images: {
-    'hello-world': {
-      source: { dockerTag: 'ghcr.io/start9labs/hello-world:2.0.0' },
-      arch: ['x86_64', 'aarch64', 'riscv64'],
+    filebrowser: {
+      source: {
+        dockerTag: `${dockerImage}:${dockerVersion}`,
+      },
+      arch: ['x86_64', 'aarch64'],
     },
   },
   dependencies: {},

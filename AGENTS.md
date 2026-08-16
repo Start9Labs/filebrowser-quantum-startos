@@ -6,12 +6,17 @@ Develop it inside a StartOS packaging workspace created by `start-cli s9pk init-
 which provides the packaging guide and agent context one level up. If you're reading this in a
 bare clone with no workspace, the full guide is at <https://docs.start9.com/packaging>.
 
-Work this package's `TODO.md` from top to bottom. Keep `README.md` (architecture, for developers and LLMs) and `instructions.md` (end-user docs) in sync with your changes.
+Keep `README.md` (architecture, for developers and LLMs) and `instructions.md` (end-user docs) in sync with your changes.
 
 ## This repo
 
-- **Package id is `hello-world`.** Minimal reference/template service — a single web UI on port 80, one `main` volume, no dependencies and no actions. Use it as the starting point when packaging a new service.
+- **The package id is `filebrowser`, shared with `filebrowser-startos`.** This package is the `#quantum` ExVer flavor of that id; the two are one marketplace listing with a flavor picker, the way Bitcoin Core and Knots share `bitcoind`. Never change the `id`, and never drop `data` from `volumes` — eight sibling packages mount that volume by name and constrain it at compile time through `Manifest['volumes'][number]`.
+- **Three things keep the flavor reachable, and each fails silently if removed.** `migrations.other['^2']` provides the sidegrade edges — without them `canMigrateFrom` does not cover the 2.x line and StartOS rejects the switch as an unsatisfiable range. `.satisfies('2.63.23:0')` declares the unflavored alias that the dependents' version ranges accept; a flavored version satisfies none of them on its own. And the flavor prefix itself must stay on `version`. Verify after any change by executing the graph: `canMigrateFrom` must contain the 2.x range.
+- **Never put an `auth` block in the generated `config.yaml`.** A non-empty `auth.adminPassword` makes Quantum reset that user's password on **every** start — it would destroy the password migrated from File Browser and stop the user from ever setting their own. The admin credential is applied through the CLI in `set-admin-password` instead, which is why that action is `only-stopped`: Quantum holds an exclusive database lock while running and the CLI reports `the database is locked`.
+- **`server.cacheDir` must be an absolute path on a real volume.** The default is the relative string `tmp`, which resolves against the process working directory and puts the search index on ephemeral storage — rebuilt on every restart, with no error to notice. Quantum also writes and fsyncs a 10 MB probe file there on every start and treats an I/O error as fatal, so the `cache` volume must be chowned to uid 1000 along with the others.
+- **The pre-switch snapshot is the only way back.** `filebrowser.db.pre-quantum` is written by the up-migration and restored by the down-migration; File Browser 2.x cannot read the database once Quantum has converted it. Quantum's own `.bak` is not a substitute — it is rewritten once per converted user, so on a multi-user database it already contains partially-migrated state. That is why `FILEBROWSER_DISABLE_AUTOMATIC_BACKUP` is set.
+- **The `-stable` suffix belongs only in the image tag.** ExVer reads it as a prerelease, so `1.5.2-stable:0` sorts below `1.5.2:0`.
 
 ## Inspecting a running install
 
-To run a command inside the service's container (read its generated config, grep app logs), use `start-cli package attach hello-world -n hello-world-sub -- <cmd>`. Select the subcontainer by **name** with `-n` (the name passed to `SubContainer.of` in `main.ts` — here `hello-world-sub`) or by image with `-i`. Note: `-s/--subcontainer` matches the internal **Guid**, not the name, so passing a name to `-s` fails with "no matching subcontainers".
+To run a command inside the service's container, use `start-cli package attach filebrowser -n filebrowser-sub -- <cmd>`. Select the subcontainer by **name** with `-n` (the name passed to `SubContainer.of` in `main.ts` — here `filebrowser-sub`) or by image with `-i`. Note: `-s/--subcontainer` matches the internal **Guid**, not the name, so passing a name to `-s` fails with "no matching subcontainers".
