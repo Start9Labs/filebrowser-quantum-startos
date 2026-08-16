@@ -2,7 +2,13 @@ import { utils } from '@start9labs/start-sdk'
 import { storeJson } from '../fileModels/store.json'
 import { i18n } from '../i18n'
 import { sdk } from '../sdk'
-import { adminUsername, configFile, mounts, randomPassword } from '../utils'
+import {
+  adminUsername,
+  chownCommand,
+  configFile,
+  mounts,
+  randomPassword,
+} from '../utils'
 
 export const setAdminPassword = sdk.Action.withoutInput(
   // id
@@ -30,10 +36,8 @@ export const setAdminPassword = sdk.Action.withoutInput(
       mounts,
       'setadmin',
       async (sub) => {
-        await sub.execFail(
-          ['chown', '-R', '1000:1000', '/database', '/config'],
-          { user: 'root' },
-        )
+        // On a fresh install the daemon's chown oneshot has not run yet.
+        await sub.execFail(chownCommand, { user: 'root' })
         // `-u` must come first: the subcommand reads it positionally.
         await sub.execFail([
           'filebrowser',

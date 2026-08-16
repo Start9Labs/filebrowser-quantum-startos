@@ -14,6 +14,18 @@ export const preQuantumBackup = `${databaseFile}.pre-quantum`
 
 export const adminUsername = 'admin'
 
+// Quantum runs as uid 1000 and fsyncs a probe file into cacheDir on every
+// start, treating an I/O error there as fatal.
+export const chownCommand: [string, ...string[]] = [
+  'chown',
+  '-R',
+  '1000:1000',
+  dataPath,
+  databasePath,
+  configPath,
+  cachePath,
+]
+
 export const randomPassword = {
   charset: 'a-z,A-Z,1-9',
   len: 22,
