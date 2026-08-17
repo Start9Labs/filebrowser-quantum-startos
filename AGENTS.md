@@ -6,12 +6,10 @@ Develop it inside a StartOS packaging workspace created by `start-cli s9pk init-
 which provides the packaging guide and agent context one level up. If you're reading this in a
 bare clone with no workspace, the full guide is at <https://docs.start9.com/packaging>.
 
-Work this package's `TODO.md` from top to bottom. Keep `README.md` (architecture, for developers and LLMs) and `instructions.md` (end-user docs) in sync with your changes.
+Work this package's `TODO.md` from top to bottom. Keep `README.md` (technical reference for an AI support or administering agent) and `instructions.md` (end-user docs) in sync with your changes.
 
 ## This repo
 
-- **Package id is `hello-world`.** Minimal reference/template service — a single web UI on port 80, one `main` volume, no dependencies and no actions. Use it as the starting point when packaging a new service.
-
-## Inspecting a running install
-
-To run a command inside the service's container (read its generated config, grep app logs), use `start-cli package attach hello-world -n hello-world-sub -- <cmd>`. Select the subcontainer by **name** with `-n` (the name passed to `SubContainer.of` in `main.ts` — here `hello-world-sub`) or by image with `-i`. Note: `-s/--subcontainer` matches the internal **Guid**, not the name, so passing a name to `-s` fails with "no matching subcontainers".
+- **The package id is `filebrowser`, shared with `filebrowser-startos`.** This package is the `#quantum` ExVer flavor of that id; the two are one marketplace listing with a flavor picker, the way Bitcoin Core and Knots share `bitcoind`. Never change the `id`, and never drop `data` from `volumes` — sibling packages mount that volume by name and constrain it at compile time through `Manifest['volumes'][number]`.
+- **`main` reads `config.yaml` with `.const(effects)` and that read is load-bearing.** Quantum binds its config once at startup and has no watcher, so without the reactive read `set-expiration` would write the file and change nothing until someone restarted by hand. The read was correctly absent while every field was a literal; it became necessary the moment a user-mutable key was added.
+- **`server.cacheDir` must be an absolute path on a real volume.** The default is the relative string `tmp`, which resolves against the process working directory and puts the search index on ephemeral storage — rebuilt on every restart, with no error to notice. Quantum also writes and fsyncs a 10 MB probe file there on every start and treats an I/O error as fatal, so the `cache` volume must be chowned to uid 1000 along with the others.

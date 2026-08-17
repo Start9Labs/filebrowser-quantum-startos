@@ -1,43 +1,52 @@
+import { configYaml } from './fileModels/config.yaml'
 import { i18n } from './i18n'
 import { sdk } from './sdk'
-import { uiPort } from './utils'
+import { chownCommand, mounts, uiPort } from './utils'
 
 export const main = sdk.setupMain(async ({ effects }) => {
-  /**
-   * ======================== Setup (optional) ========================
-   *
-   * In this section, we fetch any resources or run any desired preliminary commands.
-   */
-  console.info(i18n('Starting Hello World!'))
+  console.info(i18n('Starting FileBrowser Quantum'))
 
-  /**
-   * ======================== Daemons ========================
-   *
-   * In this section, we create one or more daemons that define the service runtime.
-   *
-   * Each daemon defines its own health check, which can optionally be exposed to the user.
-   */
-  return sdk.Daemons.of(effects).addDaemon('primary', {
-    subcontainer: sdk.SubContainer.of(
-      effects,
-      { imageId: 'hello-world' },
-      sdk.Mounts.of().mountVolume({
-        volumeId: 'main',
-        subpath: null,
-        mountpoint: '/data',
-        readonly: false,
-      }),
-      'hello-world-sub',
-    ),
-    exec: { command: ['hello-world'] },
-    ready: {
-      display: i18n('Web Interface'),
-      fn: () =>
-        sdk.healthCheck.checkPortListening(effects, uiPort, {
-          successMessage: i18n('The web interface is ready'),
-          errorMessage: i18n('The web interface is not ready'),
-        }),
-    },
-    requires: [],
-  })
+  // set-expiration writes this file while the service is running, and Quantum
+  // reads its config only at startup; re-running main on a change is what
+  // restarts it so the new timeout applies.
+  await configYaml.read().const(effects)
+
+  const subcontainer = sdk.SubContainer.of(
+    effects,
+    { imageId: 'filebrowser' },
+    mounts,
+    'filebrowser-sub',
+  )
+
+  return sdk.Daemons.of(effects)
+    .addOneshot('chown', {
+      subcontainer,
+      exec: { command: chownCommand, user: 'root' },
+      requires: [],
+    })
+    .addDaemon('primary', {
+      subcontainer,
+      exec: {
+        command: sdk.useEntrypoint(),
+        env: {
+          // Quantum copies the database once per converted user, so on a
+          // multi-user database its "backup" holds partly-converted state
+          // under a name that looks authoritative.
+          FILEBROWSER_DISABLE_AUTOMATIC_BACKUP: 'true',
+        },
+      },
+      ready: {
+        display: i18n('Web Interface'),
+        fn: () =>
+          sdk.healthCheck.checkWebUrl(
+            effects,
+            `http://localhost:${uiPort}/health`,
+            {
+              successMessage: i18n('The web interface is ready'),
+              errorMessage: i18n('The web interface is not ready'),
+            },
+          ),
+      },
+      requires: ['chown'],
+    })
 })
