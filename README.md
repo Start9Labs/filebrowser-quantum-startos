@@ -49,7 +49,11 @@ The Docker namespace is `gtstef`, not `gtsteffaniak`; the full name resolves onl
 
 A `chown` oneshot runs as root before the daemon on every start, handing all four volumes to uid 1000. The Set Admin Password action uses its own short-lived subcontainer, `setadmin`, and repeats the same `chown` there because on a fresh install the daemon's oneshot has not run yet.
 
-One StartOS-managed environment variable is set: `FILEBROWSER_DISABLE_AUTOMATIC_BACKUP`. Quantum otherwise copies the database to `.bak` during conversion, but takes that copy _inside_ the per-user loop, so on a multi-user database the final `.bak` holds partly-converted users under a name that implies otherwise.
+Three StartOS-managed environment variables are set on the daemon.
+
+`FILEBROWSER_CONFIG` and `FILEBROWSER_DATABASE` override paths the image bakes in, both of which sit under `/home/filebrowser/data` — a directory no volume mounts. Left alone, the daemon reads the image's own config in place of the package's and writes its database into the container's ephemeral layer, and nothing in the log marks that as wrong; the source name is the only visible tell, `srv: /srv` from the image's config where the package's would print `Files: /srv`. `FILEBROWSER_DATABASE` is strictly the belt to that braces — the config file's `server.database` overrides it — but pointed at the image's path it also makes the daemon warn on every start that its database is missing.
+
+`FILEBROWSER_DISABLE_AUTOMATIC_BACKUP` is the third. Quantum otherwise copies the database to `.bak` during conversion, but takes that copy _inside_ the per-user loop, so on a multi-user database the final `.bak` holds partly-converted users under a name that implies otherwise.
 
 ## Volume and Data Layout
 
@@ -97,9 +101,11 @@ One interface. Nothing is exported for dependent services — a dependent reache
 
 | Interface | Id   | Type | Port | Description                                   |
 | --------- | ---- | ---- | ---- | --------------------------------------------- |
-| Web UI    | `ui` | ui   | 80   | The web interface; WebDAV is served at `/dav` |
+| Web UI    | `ui` | ui   | 8080 | The web interface; WebDAV is served at `/dav` |
 
 The port is bound on the `main` MultiHost and is not masked.
+
+Upstream listens on 80 and the image exposes it, but the image also runs as uid 1000 with no `CAP_NET_BIND_SERVICE`, and a subcontainer keeps the kernel's 1024 floor on unprivileged binds — so the package moves the listener to 8080 through `server.port` rather than handing the daemon root. StartOS fronts it either way; the port is not one a user sees.
 
 ## Installation and First-Run Flow
 
@@ -203,10 +209,12 @@ file_models:
   - /config/config.yaml
   - /config/startos.json
 startos_managed_env_vars:
+  - FILEBROWSER_CONFIG
+  - FILEBROWSER_DATABASE
   - FILEBROWSER_DISABLE_AUTOMATIC_BACKUP
 dependencies: []
 interfaces:
-  ui: { type: ui, port: 80 } # web UI, and WebDAV at /dav
+  ui: { type: ui, port: 8080 } # web UI, and WebDAV at /dav
 actions:
   - set-admin-password # only-stopped
   - set-expiration

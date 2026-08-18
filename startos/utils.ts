@@ -1,6 +1,8 @@
 import { sdk } from './sdk'
 
-export const uiPort = 80
+// Upstream defaults to 80. The image runs as uid 1000 with no
+// CAP_NET_BIND_SERVICE, and a subcontainer keeps the kernel's 1024 floor.
+export const uiPort = 8080
 export const dataPath = '/srv'
 export const databasePath = '/database'
 export const configPath = '/config'

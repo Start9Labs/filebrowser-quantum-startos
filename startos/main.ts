@@ -1,7 +1,7 @@
 import { configYaml } from './fileModels/config.yaml'
 import { i18n } from './i18n'
 import { sdk } from './sdk'
-import { chownCommand, mounts, uiPort } from './utils'
+import { chownCommand, configFile, databaseFile, mounts, uiPort } from './utils'
 
 export const main = sdk.setupMain(async ({ effects }) => {
   console.info(i18n('Starting FileBrowser Quantum'))
@@ -29,6 +29,10 @@ export const main = sdk.setupMain(async ({ effects }) => {
       exec: {
         command: sdk.useEntrypoint(),
         env: {
+          // The image bakes both of these at /home/filebrowser/data, which
+          // nothing mounts.
+          FILEBROWSER_CONFIG: configFile,
+          FILEBROWSER_DATABASE: databaseFile,
           // Quantum copies the database once per converted user, so on a
           // multi-user database its "backup" holds partly-converted state
           // under a name that looks authoritative.
