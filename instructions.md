@@ -2,8 +2,8 @@
 
 ## Documentation
 
-- [FileBrowser Quantum documentation](https://filebrowserquantum.com/) — the upstream manual. Note the site documents the newer 2.x line; this package ships 1.5.x, so a few settings pages will not match.
-- [Migration from the original FileBrowser](https://filebrowserquantum.com/en/docs/migration/) — what does and does not carry over.
+- [FileBrowser Quantum documentation](https://filebrowserquantum.com/) — the upstream manual. It defaults to the newer 2.x line; this package ships 1.5.x, so use the pages marked **v1.5.x** wherever both exist.
+- [Migration from the original FileBrowser](https://filebrowserquantum.com/en/docs/getting-started/migration/) — what does and does not carry over.
 
 ## What you get on StartOS
 
