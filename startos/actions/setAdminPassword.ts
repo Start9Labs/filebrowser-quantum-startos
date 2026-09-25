@@ -37,7 +37,7 @@ export const setAdminPassword = sdk.Action.withoutInput(
       'setadmin',
       async (sub) => {
         // On a fresh install the daemon's chown oneshot has not run yet.
-        await sub.execFail(chownCommand, { user: 'root' })
+        await sub.execFail(chownCommand, { user: 'root' }, null)
         // `-u` must come first: the subcommand reads it positionally.
         await sub.execFail([
           'filebrowser',
