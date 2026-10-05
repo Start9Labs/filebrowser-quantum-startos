@@ -25,7 +25,7 @@ Note the Docker Hub namespace is **`gtstef`**, not `gtsteffaniak`; the latter is
 
 Edit `startos/manifest/index.ts` and set `dockerVersion`, then bump `version` in `startos/versions/current.ts` — keeping the `#quantum:` flavor prefix — and rewrite `releaseNotes`.
 
-The `-stable` suffix belongs **only** in the image tag. ExVer parses it as a prerelease, so `1.5.2-stable:0` would sort _below_ `1.5.2:0`.
+Preserve the complete upstream version, including `-stable`, in both the image tag and the ExVer upstream portion: `v1.5.8-stable` becomes image tag `1.5.8-stable` and package version `#quantum:1.5.8-stable:0`. ExVer sorts suffixed versions below the same numeric version without a suffix, but the suffix is upstream's stable-channel identifier, not a beta. Do not strip it or republish older releases under corrected versions; the next upstream patch sorts above the previously published numeric version.
 
 Two things must move with it:
 

@@ -37,6 +37,8 @@
 
 The upstream image is used unmodified, with its own entrypoint, and one subcontainer runs the service.
 
+Package versions retain upstream's `-stable` suffix even though ExVer sorts suffixed versions as prereleases. The image comes from upstream's stable release line.
+
 | Property      | Value                                                                |
 | ------------- | -------------------------------------------------------------------- |
 | Image         | `gtstef/filebrowser`                                                 |

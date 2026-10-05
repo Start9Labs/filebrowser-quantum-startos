@@ -7,6 +7,8 @@
 
 ## What you get on StartOS
 
+This package tracks Quantum's stable release line. A `-stable` suffix in its displayed version identifies that line, not a beta release.
+
 FileBrowser Quantum is the same web file manager as File Browser, picked up and maintained by a different developer after the original project stopped. Upload, organize, preview and share files from a browser.
 
 Compared to File Browser you also get search that returns results as you type, previews for office documents, video and 3D models, access control down to individual folders, and the ability to mount your files as a network drive over WebDAV.
