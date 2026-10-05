@@ -16,21 +16,31 @@ async function legacySessionHours(): Promise<number | undefined> {
 }
 
 export const current = VersionInfo.of({
-  version: '#quantum:1.5.6:1',
+  version: '#quantum:1.5.8-stable:0',
   releaseNotes: {
-    en_US: `Resetting the admin password no longer fails on a server holding many files.
+    en_US: `Updated FileBrowser Quantum to 1.5.8-stable. Fixes a high-severity TOTP re-enrollment vulnerability: replacing an existing second factor now requires an authenticated self or admin session (GHSA-qx86-4v5r-26g5). Existing TOTP login continues to work, and bundled ffmpeg is updated to 9.0.2.
+
+Full upstream release notes: https://github.com/gtsteffaniak/filebrowser/releases/tag/v1.5.8-stable
 
 **Switching from File Browser?** Your files, your user accounts and everyone's existing passwords carry over — Quantum reads the File Browser database directly and converts it. The switch is one-way, because File Browser is end of life, so take a StartOS backup first. Two things do not carry over: per-user folder restrictions are lost, so re-check every restricted account afterwards, and existing share links stop working and must be re-created.`,
-    es_ES: `Restablecer la contraseña de administrador ya no falla en un servidor con muchos archivos.
+    es_ES: `FileBrowser Quantum se ha actualizado a 1.5.8-stable. Corrige una vulnerabilidad de gravedad alta al volver a registrar TOTP: sustituir un segundo factor existente ahora requiere una sesión autenticada del propio usuario o de un administrador (GHSA-qx86-4v5r-26g5). El inicio de sesión con TOTP existente sigue funcionando y ffmpeg se ha actualizado a 9.0.2.
+
+Notas de la versión completas: https://github.com/gtsteffaniak/filebrowser/releases/tag/v1.5.8-stable
 
 **¿Vienes de File Browser?** Tus archivos, tus cuentas de usuario y las contraseñas existentes se conservan: Quantum lee directamente la base de datos de File Browser y la convierte. El cambio es irreversible, porque File Browser ha llegado al final de su vida útil, así que haz antes una copia de seguridad de StartOS. Dos cosas no se trasladan: se pierden las restricciones de carpeta por usuario, así que revisa después todas las cuentas restringidas, y los enlaces de compartición existentes dejan de funcionar y hay que volver a crearlos.`,
-    de_DE: `Das Zurücksetzen des Administratorpassworts schlägt auf einem Server mit vielen Dateien nicht mehr fehl.
+    de_DE: `FileBrowser Quantum wurde auf 1.5.8-stable aktualisiert. Behebt eine Sicherheitslücke hoher Schwere bei der erneuten TOTP-Einrichtung: Das Ersetzen eines bestehenden zweiten Faktors erfordert jetzt eine authentifizierte Sitzung des betroffenen Benutzers oder eines Administrators (GHSA-qx86-4v5r-26g5). Die Anmeldung mit bestehendem TOTP funktioniert weiterhin, und das mitgelieferte ffmpeg wurde auf 9.0.2 aktualisiert.
+
+Vollständige Versionshinweise: https://github.com/gtsteffaniak/filebrowser/releases/tag/v1.5.8-stable
 
 **Wechseln Sie von File Browser?** Ihre Dateien, Ihre Benutzerkonten und alle vorhandenen Passwörter bleiben erhalten — Quantum liest die File-Browser-Datenbank direkt und konvertiert sie. Der Wechsel ist endgültig, denn File Browser wird nicht mehr gepflegt; erstellen Sie vorher eine StartOS-Sicherung. Zwei Dinge werden nicht übernommen: benutzerbezogene Ordnerbeschränkungen gehen verloren, prüfen Sie danach jedes eingeschränkte Konto, und bestehende Freigabelinks funktionieren nicht mehr und müssen neu erstellt werden.`,
-    pl_PL: `Resetowanie hasła administratora nie kończy się już błędem na serwerze z dużą liczbą plików.
+    pl_PL: `FileBrowser Quantum został zaktualizowany do 1.5.8-stable. Usuwa lukę bezpieczeństwa o wysokiej istotności przy ponownej konfiguracji TOTP: zastąpienie istniejącego drugiego składnika wymaga teraz uwierzytelnionej sesji danego użytkownika lub administratora (GHSA-qx86-4v5r-26g5). Logowanie z istniejącym TOTP nadal działa, a dołączony ffmpeg został zaktualizowany do 9.0.2.
+
+Pełne informacje o wydaniu: https://github.com/gtsteffaniak/filebrowser/releases/tag/v1.5.8-stable
 
 **Przechodzisz z File Browser?** Twoje pliki, konta użytkowników i istniejące hasła zostaną zachowane — Quantum odczytuje bazę danych File Browser bezpośrednio i konwertuje ją. Przejście jest nieodwracalne, ponieważ File Browser nie jest już rozwijany, więc najpierw wykonaj kopię zapasową StartOS. Dwie rzeczy nie zostaną przeniesione: ograniczenia folderów przypisane do użytkowników zostaną utracone, więc sprawdź potem każde konto z ograniczeniami, a istniejące linki udostępniania przestaną działać i trzeba je utworzyć na nowo.`,
-    fr_FR: `La réinitialisation du mot de passe administrateur n'échoue plus sur un serveur contenant de nombreux fichiers.
+    fr_FR: `FileBrowser Quantum a été mis à jour vers 1.5.8-stable. Corrige une faille de sécurité de gravité élevée lors de la réinscription TOTP : remplacer un second facteur existant exige désormais une session authentifiée de l'utilisateur concerné ou d'un administrateur (GHSA-qx86-4v5r-26g5). La connexion avec un TOTP existant continue de fonctionner et ffmpeg a été mis à jour vers 9.0.2.
+
+Notes de version complètes : https://github.com/gtsteffaniak/filebrowser/releases/tag/v1.5.8-stable
 
 **Vous basculez depuis File Browser ?** Vos fichiers, vos comptes d'utilisateur et tous les mots de passe existants sont conservés : Quantum lit directement la base de données de File Browser et la convertit. La bascule est définitive, car File Browser est en fin de vie ; effectuez d'abord une sauvegarde StartOS. Deux choses ne sont pas reprises : les restrictions de dossier par utilisateur sont perdues, revérifiez ensuite chaque compte restreint, et les liens de partage existants cessent de fonctionner et doivent être recréés.`,
   },
@@ -61,4 +71,4 @@ export const current = VersionInfo.of({
 })
   // Lets the eight packages that depend on `filebrowser` keep their unflavored
   // version ranges: a flavored version satisfies none of them on its own.
-  .satisfies('2.63.23:2')
+  .satisfies('2.63.23:3')
