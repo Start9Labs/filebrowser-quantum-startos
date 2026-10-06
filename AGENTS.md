@@ -18,16 +18,23 @@ Freshly scaffolded? Work the
 guide page, not a file in this repo — read it, don't copy it in.
 
 Keep `README.md` (technical reference for an AI support or administering agent) and
-`instructions.md` (end-user docs) in sync with your changes.
+`instructions.md` (end-user docs) in sync with your changes. This file restates neither:
+whoever changes the package has both, so it carries only what they don't — repo mechanics,
+a change that looks right and is not, where the next thing gets added, a naming trap, a
+build or test invocation particular to this repo.
 
-**Bugs and feature requests are GitHub issues on this repo** — file them as you find them.
+**Fix a defect you spot rather than reporting it** — you have the package open and the
+context to be sure. File **a GitHub issue on this repo** only when the call isn't yours to
+make: you can't pin the cause down, two defensible fixes exist, or it's too large to ride on
+the work in hand. An open issue is a report, not a queue — implement one when you're asked
+to or when it's labelled `Approved`, then close it with `Closes #<n>`.
+
 Don't record work in the repo instead: no `TODO.md`, no `NOTES.md`, no `PLAN.md`. What you
 verified, tried, and decided belongs in the commit message and the PR body.
 
 ## This repo
 
-- **The package id is `filebrowser`, shared with `filebrowser-startos`.** This package is the `#quantum` ExVer flavor of that id; the two are one marketplace listing with a flavor picker, the way Bitcoin Core and Knots share `bitcoind`. Never change the `id`, and never drop `data` from `volumes` — sibling packages mount that volume by name and constrain it at compile time through `Manifest['volumes'][number]`.
-- **`main` reads `config.yaml` with `.const(effects)` and that read is load-bearing.** Quantum binds its config once at startup and has no watcher, so without the reactive read `set-expiration` would write the file and change nothing until someone restarted by hand. The read was correctly absent while every field was a literal; it became necessary the moment a user-mutable key was added.
-- **The image bakes `FILEBROWSER_CONFIG` and `FILEBROWSER_DATABASE` under `/home/filebrowser/data`, which no volume mounts.** The daemon must be handed both, or it reads the image's own config and writes its database to the container's ephemeral layer. The failure is silent: the only tell in the log is the source printing as `srv: /srv` rather than the package's `Files: /srv`.
-- **`uiPort` must stay above 1024.** Upstream defaults to 80 and the image exposes it, but it runs as uid 1000, a subcontainer keeps the kernel's floor on unprivileged binds, and the SDK exposes no way to grant `CAP_NET_BIND_SERVICE` — so 80 crash-loops on `bind: permission denied`. The port reaches the daemon through `server.port` in `config.yaml`, which means it depends on the env override above being in place.
-- **`server.cacheDir` must be an absolute path on a real volume.** The default is the relative string `tmp`, which resolves against the process working directory and puts the search index on ephemeral storage — rebuilt on every restart, with no error to notice. Quantum also writes and fsyncs a 10 MB probe file there on every start and treats an I/O error as fatal, so the `cache` volume must be chowned to uid 1000 along with the others.
+- **Never change the `id`, and never drop `data` or `main` from `volumes`.** This is the `#quantum` flavor of `filebrowser`, and sibling packages mount `data` by name and type-check it through `Manifest['volumes'][number]`. The `main` volume looks unused, but the switch migration reads a StartOS 0.3.5.1 File Browser's database and files from it.
+- **Keep `main`'s `configYaml.read().const(effects)`.** Quantum reads its config only at startup, so that read is what makes Set Session Timeout take effect.
+- **Keep `FILEBROWSER_CONFIG` and `FILEBROWSER_DATABASE` on the daemon, `uiPort` above 1024, and `server.cacheDir` absolute.** Each looks removable and each fails quietly or crash-loops: the image's own paths are unmounted, uid 1000 cannot bind below 1024, and a relative cache dir lands on ephemeral storage.
+- **Never write `auth.adminPassword` into `config.yaml`.** When set, Quantum resets that user's password on every start; Set Admin Password goes through the CLI instead.

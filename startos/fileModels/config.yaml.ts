@@ -8,17 +8,17 @@ import {
   uiPort,
 } from '../utils'
 
-const loggingSchema = z.object({
+const loggingSchema = z.looseObject({
   levels: z.literal('info|warning|error').catch('info|warning|error'),
   output: z.literal('stdout').catch('stdout'),
 })
 
-const sourceSchema = z.object({
+const sourceSchema = z.looseObject({
   path: z.literal(dataPath).catch(dataPath),
   name: z.literal('Files').catch('Files'),
 })
 
-const serverSchema = z.object({
+const serverSchema = z.looseObject({
   port: z.literal(uiPort).catch(uiPort),
   database: z.literal(databaseFile).catch(databaseFile),
   cacheDir: z.literal(cachePath).catch(cachePath),
@@ -32,11 +32,11 @@ const serverSchema = z.object({
 // Emitting `adminPassword` — even as an empty string or null — arms a check
 // that resets the admin user's password on every start, undoing both the
 // password migrated from File Browser and anything the user later chooses.
-const authSchema = z.object({
+const authSchema = z.looseObject({
   tokenExpirationHours: z.number().int().min(1).catch(defaultSessionHours),
 })
 
-const shape = z.object({
+const shape = z.looseObject({
   server: serverSchema.catch(() => serverSchema.parse({})),
   auth: authSchema.catch(() => authSchema.parse({})),
 })
