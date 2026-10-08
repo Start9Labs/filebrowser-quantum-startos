@@ -50,7 +50,7 @@ async function adoptLegacyVolume(): Promise<number | undefined> {
       data.path,
     ])
   for (const f of await fs.readdir(main.subpath('data')).catch(() => [])) {
-    const ext = (await fs.stat(main.subpath(`data/${f}`))).isDirectory()
+    const ext = (await fs.lstat(main.subpath(`data/${f}`))).isDirectory()
       ? ''
       : path.extname(f)
     const base = f.slice(0, f.length - ext.length)
