@@ -9,7 +9,7 @@ export const inputSpec = InputSpec.of({
   timeout: Value.number({
     name: i18n('Session Timeout'),
     description: i18n(
-      'The length of time (in hours) before a browser session will be automatically terminated',
+      'How long someone stays signed in to the web interface before having to log in again. A shorter time is safer where FileBrowser Quantum is opened on shared or public devices; a longer one means logging in less often.',
     ),
     required: true,
     default: defaultSessionHours,

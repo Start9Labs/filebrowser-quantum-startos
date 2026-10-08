@@ -18,10 +18,11 @@ const dict = {
   'Your admin username and password are below. Write them down or save them to a password manager.': 9,
   Username: 10,
   Password: 11,
+  'Gives the admin account a new password and turns off its two-factor login, creating the account if it does not exist. Any password it had stops working, and the new one is shown only once.': 18,
 
   // actions/setExpiration.ts
   'Session Timeout': 12,
-  'The length of time (in hours) before a browser session will be automatically terminated': 13,
+  'How long someone stays signed in to the web interface before having to log in again. A shorter time is safer where FileBrowser Quantum is opened on shared or public devices; a longer one means logging in less often.': 13,
   hours: 14,
   'Set Session Timeout': 15,
   'Determine how long a browser session lasts before it is automatically terminated': 16,
