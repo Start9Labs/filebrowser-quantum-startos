@@ -3,6 +3,7 @@ import { sdk } from '../sdk'
 import {
   cachePath,
   databaseFile,
+  legacyDatabaseFile,
   dataPath,
   defaultSessionHours,
   uiPort,
@@ -18,9 +19,17 @@ const sourceSchema = z.looseObject({
   name: z.literal('Files').catch('Files'),
 })
 
-const serverSchema = z.looseObject({
+const httpSchema = z.looseObject({
   port: z.literal(uiPort).catch(uiPort),
-  database: z.literal(databaseFile).catch(databaseFile),
+})
+
+const databaseSchema = z.looseObject({
+  path: z.literal(databaseFile).catch(databaseFile),
+  migrateFrom: z.union([z.literal(''), z.literal(legacyDatabaseFile)]).catch(''),
+})
+
+const serverSchema = z.looseObject({
+  database: databaseSchema.catch(() => databaseSchema.parse({})),
   cacheDir: z.literal(cachePath).catch(cachePath),
   // StartOS owns updates; upstream otherwise polls GitHub on a timer.
   disableUpdateCheck: z.literal(true).catch(true),
@@ -37,6 +46,7 @@ const authSchema = z.looseObject({
 })
 
 const shape = z.looseObject({
+  http: httpSchema.catch(() => httpSchema.parse({})),
   server: serverSchema.catch(() => serverSchema.parse({})),
   auth: authSchema.catch(() => authSchema.parse({})),
 })

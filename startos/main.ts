@@ -1,7 +1,7 @@
 import { configYaml } from './fileModels/config.yaml'
 import { i18n } from './i18n'
 import { sdk } from './sdk'
-import { chownCommand, configFile, databaseFile, mounts, uiPort } from './utils'
+import { chownCommand, configFile, databaseFile, healthCommand, mounts } from './utils'
 
 export const main = sdk.setupMain(async ({ effects }) => {
   console.info(i18n('Starting FileBrowser Quantum'))
@@ -32,23 +32,16 @@ export const main = sdk.setupMain(async ({ effects }) => {
           // The image bakes both of these at /home/filebrowser/data, which
           // nothing mounts.
           FILEBROWSER_CONFIG: configFile,
-          FILEBROWSER_DATABASE: databaseFile,
-          // Quantum copies the database once per converted user, so on a
-          // multi-user database its "backup" holds partly-converted state
-          // under a name that looks authoritative.
-          FILEBROWSER_DISABLE_AUTOMATIC_BACKUP: 'true',
+          FILEBROWSER_DATABASE_PATH: databaseFile,
         },
       },
       ready: {
         display: i18n('Web Interface'),
         fn: () =>
-          sdk.healthCheck.checkWebUrl(
-            effects,
-            `http://localhost:${uiPort}/health`,
-            {
-              successMessage: i18n('The web interface is ready'),
-              errorMessage: i18n('The web interface is not ready'),
-            },
+          sdk.healthCheck.runHealthScript(
+            healthCommand,
+            subcontainer,
+            { errorMessage: i18n('The web interface is not ready') },
           ),
       },
       requires: ['chown'],
