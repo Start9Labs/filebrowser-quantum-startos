@@ -65,7 +65,8 @@ export async function migrateSQLiteConfig(effects: T.Effects) {
 }
 
 export async function convertFileBrowserDatabase(effects: T.Effects) {
-  if (!(await nonEmptyFile(sdk.volumes.database.subpath(legacyDatabaseName)))) return
+  if (!(await nonEmptyFile(sdk.volumes.database.subpath(legacyDatabaseName))))
+    return
   const { configYaml } = await import('./fileModels/config.yaml')
   await configYaml.merge(effects, {})
   const config = await configYaml.read().once()
@@ -91,7 +92,10 @@ export async function convertFileBrowserDatabase(effects: T.Effects) {
       mounts,
       'convert-filebrowser',
       async (subcontainer) => {
-        await subcontainer.execFail(chownCommand, { user: 'root', timeout: null })
+        await subcontainer.execFail(chownCommand, {
+          user: 'root',
+          timeout: null,
+        })
         // SQLite's importer cannot translate File Browser's legacy `perm` fields.
         await sdk.Daemons.of(effects)
           .addDaemon('convert', {
@@ -107,11 +111,9 @@ export async function convertFileBrowserDatabase(effects: T.Effects) {
             ready: {
               display: null,
               fn: () =>
-                sdk.healthCheck.runHealthScript(
-                  healthCommand,
-                  subcontainer,
-                  { errorMessage: 'Waiting for File Browser database conversion' },
-                ),
+                sdk.healthCheck.runHealthScript(healthCommand, subcontainer, {
+                  errorMessage: 'Waiting for File Browser database conversion',
+                }),
             },
             requires: [],
           })

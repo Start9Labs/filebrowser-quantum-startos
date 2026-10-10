@@ -106,7 +106,7 @@ One interface. Nothing is exported for dependent services — a dependent reache
 
 The port is bound on the `main` MultiHost and is not masked.
 
-Upstream listens on 80 and the image exposes it, but the image also runs as uid 1000 with no `CAP_NET_BIND_SERVICE`, and a subcontainer keeps the kernel's 1024 floor on unprivileged binds — so the package moves the listener to 8080 through `server.port` rather than handing the daemon root. StartOS fronts it either way; the port is not one a user sees.
+Upstream listens on 80 and the image exposes it, but the image also runs as uid 1000 with no `CAP_NET_BIND_SERVICE`, and a subcontainer keeps the kernel's 1024 floor on unprivileged binds — so the package moves the listener to 8080 through `http.port` rather than handing the daemon root. StartOS fronts it either way; the port is not one a user sees.
 
 ## Installation and First-Run Flow
 

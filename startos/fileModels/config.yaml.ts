@@ -25,7 +25,9 @@ const httpSchema = z.looseObject({
 
 const databaseSchema = z.looseObject({
   path: z.literal(databaseFile).catch(databaseFile),
-  migrateFrom: z.union([z.literal(''), z.literal(legacyDatabaseFile)]).catch(''),
+  migrateFrom: z
+    .union([z.literal(''), z.literal(legacyDatabaseFile)])
+    .catch(''),
 })
 
 const serverSchema = z.looseObject({

@@ -1,7 +1,13 @@
 import { configYaml } from './fileModels/config.yaml'
 import { i18n } from './i18n'
 import { sdk } from './sdk'
-import { chownCommand, configFile, databaseFile, healthCommand, mounts } from './utils'
+import {
+  chownCommand,
+  configFile,
+  databaseFile,
+  healthCommand,
+  mounts,
+} from './utils'
 
 export const main = sdk.setupMain(async ({ effects }) => {
   console.info(i18n('Starting FileBrowser Quantum'))
@@ -38,11 +44,9 @@ export const main = sdk.setupMain(async ({ effects }) => {
       ready: {
         display: i18n('Web Interface'),
         fn: () =>
-          sdk.healthCheck.runHealthScript(
-            healthCommand,
-            subcontainer,
-            { errorMessage: i18n('The web interface is not ready') },
-          ),
+          sdk.healthCheck.runHealthScript(healthCommand, subcontainer, {
+            errorMessage: i18n('The web interface is not ready'),
+          }),
       },
       requires: ['chown'],
     })
