@@ -35,7 +35,7 @@
 
 ## Image and Container Runtime
 
-The upstream image is used unmodified, with its own entrypoint, and one subcontainer runs the service.
+The upstream image is used unmodified, with its own entrypoint, and one subcontainer runs the service. A second, fixed legacy image is used only during upgrades and flavor switches to normalize BoltDB records before SQLite import; `convert-filebrowser` starts it temporarily on loopback and waits for successful HTTP readiness before shutting it down.
 
 Package versions retain upstream's `-stable` suffix even though ExVer sorts suffixed versions as prereleases. The image comes from upstream's stable release line.
 
@@ -51,11 +51,7 @@ The Docker namespace is `gtstef`, not `gtsteffaniak`; the full name resolves onl
 
 A `chown` oneshot runs as root before the daemon on every start, handing the four volumes it mounts to uid 1000. The Set Admin Password action uses its own short-lived subcontainer, `setadmin`, and repeats the same `chown` there because on a fresh install the daemon's oneshot has not run yet.
 
-Three StartOS-managed environment variables are set on the daemon.
-
-`FILEBROWSER_CONFIG` and `FILEBROWSER_DATABASE` override paths the image bakes in, both of which sit under `/home/filebrowser/data` — a directory no volume mounts. Left alone, the daemon reads the image's own config in place of the package's and writes its database into the container's ephemeral layer, and nothing in the log marks that as wrong; the source name is the only visible tell, `srv: /srv` from the image's config where the package's would print `Files: /srv`. `FILEBROWSER_DATABASE` is strictly the belt to that braces — the config file's `server.database` overrides it — but pointed at the image's path it also makes the daemon warn on every start that its database is missing.
-
-`FILEBROWSER_DISABLE_AUTOMATIC_BACKUP` is the third. Quantum otherwise copies the database to `.bak` during conversion, but takes that copy _inside_ the per-user loop, so on a multi-user database the final `.bak` holds partly-converted users under a name that implies otherwise.
+`FILEBROWSER_CONFIG` and `FILEBROWSER_DATABASE_PATH` override the image's unmounted paths under `/home/filebrowser/data`. The configuration also pins `server.database.path` to the mounted SQLite database. The legacy converter alone uses `FILEBROWSER_DATABASE` and disables its misleading per-user automatic BoltDB backups with `FILEBROWSER_DISABLE_AUTOMATIC_BACKUP`.
 
 ## Volume and Data Layout
 
@@ -64,10 +60,10 @@ Five volumes. `data`, `database`, `config` and `main` are inherited from `filebr
 | Volume     | Mount Point | Purpose                                                                         |
 | ---------- | ----------- | ------------------------------------------------------------------------------- |
 | `data`     | `/srv`      | The user's files — sibling packages mount this volume by name as a library      |
-| `database` | `/database` | `filebrowser.db`, the users, shares and access rules                            |
+| `database` | `/database` | `filebrowser.sqlite`, SQLite journals, and the retained `filebrowser.db` import source |
 | `config`   | `/config`   | The generated `config.yaml` and the package store                               |
 | `cache`    | `/cache`    | The search index, thumbnails and generated icons                                |
-| `main`     | —           | Empty, except where a File Browser converted from StartOS 0.3.5.1 left its data |
+| `main`     | —           | Empty, except where a legacy File Browser install left its data |
 
 `cache` is new relative to File Browser and is not optional. `server.cacheDir` defaults to the relative string `tmp`, which resolves against the process working directory and would put the search index on ephemeral storage, rebuilding it on every restart with nothing to indicate it. It must be an absolute path on a real volume, which is what the model enforces.
 
@@ -84,7 +80,9 @@ Two models. One is the upstream config file, almost entirely package-owned; the 
 | `config.yaml`  | YAML   | Yes — `FileHelper.yaml` | Every init, the switch migration, Set Session Timeout |
 | `startos.json` | JSON   | Yes — `FileHelper.json` | Install, the switch migration, Set Admin Password     |
 
-**Enforced** in `config.yaml` — every key is a `z.literal` and is rewritten on any package write: the port, the database path, `cacheDir`, the served source at `/srv`, logging, and `disableUpdateCheck`, which is on here and off upstream because StartOS owns updates.
+**Enforced** in `config.yaml` on every package write: `http.port`, `server.database.path`, `cacheDir`, the served source at `/srv`, logging, and `disableUpdateCheck`, which is on here because StartOS owns updates. `server.database.migrateFrom` is seeded by the upgrade or switch migration only when a non-empty BoltDB exists, and remains set to that retained file; fresh installs leave it empty. Removing that file requires clearing `migrateFrom` too, otherwise upstream refuses to start even after import.
+
+The migration writes a temporary `config.v1.yaml` for the legacy converter and removes it afterwards. No admin password is added to either configuration.
 
 **Yours:** `auth.tokenExpirationHours`, through Set Session Timeout. It is the only key the package may ever write under `auth`. A non-empty `auth.adminPassword` makes Quantum reset that user's password on _every_ start, which would both destroy a password carried over from File Browser and stop the user from ever setting their own — so the field is not emitted at all, and the admin credential is applied through the upstream CLI instead.
 
@@ -108,15 +106,19 @@ One interface. Nothing is exported for dependent services — a dependent reache
 
 The port is bound on the `main` MultiHost and is not masked.
 
-Upstream listens on 80 and the image exposes it, but the image also runs as uid 1000 with no `CAP_NET_BIND_SERVICE`, and a subcontainer keeps the kernel's 1024 floor on unprivileged binds — so the package moves the listener to 8080 through `server.port` rather than handing the daemon root. StartOS fronts it either way; the port is not one a user sees.
+Upstream listens on 80 and the image exposes it, but the image also runs as uid 1000 with no `CAP_NET_BIND_SERVICE`, and a subcontainer keeps the kernel's 1024 floor on unprivileged binds — so the package moves the listener to 8080 through `http.port` rather than handing the daemon root. StartOS fronts it either way; the port is not one a user sees.
 
 ## Installation and First-Run Flow
 
 There are two paths in, and they differ in whether you are asked for anything.
 
-**Switching from File Browser.** Because the two share a package id, the marketplace offers a **Switch** button rather than Install. Before the download, a `preDownloadAlert` (for installed versions `^2`) says the switch is one-way and lists what doesn't carry over. The migration carries the configured session timeout across and, when it finds a File Browser database, marks the admin credential as already present; Quantum then converts the database in place on its first start. A File Browser converted from StartOS 0.3.5.1 still holds its database, files and settings in `main`, so the migration first moves `filebrowser.db` into `database`, everything under `main/data/` into `data`, and the `userTimeout` from `main/start9/config.yaml` into `auth.tokenExpirationHours`, and deletes `main/start9`. Users, password hashes and the admin flag all survive, the user signs in with the credentials they already had, and no task is raised. A switch that finds no database leaves the store empty, so the install task blocks startup as on a fresh install. An update within the flavor finishes a 0.3.5.1 switch that an earlier version left unfinished, with `filebrowser.db` still in `main`. It renames Quantum's database to `filebrowser.quantum-<date>.db` (kept), then adopts the File Browser database, files and timeout the same way. A file or folder whose name already exists in `data` is moved in as `<name> (File Browser)` instead, and the log names it. StartOS presents the reverse button too, regardless of the migration graph, and then refuses it at install time — see [Limitations and Differences](#limitations-and-differences).
+**Switching from File Browser.** The migration adopts its database, files and session timeout, including data still held in `main` by a legacy install, and marks credentials initialized when a database exists. It runs the legacy Quantum image temporarily to translate File Browser's user records before the SQLite importer sees them. Direct SQLite import cannot translate File Browser's `perm` fields; the intermediate conversion retains administrator rights and passwords. A switch with no database still raises the initial credential task.
 
-**Fresh install.** No migration runs, so the store is empty and a `critical` task blocks startup until Set Admin Password has been run. That also forecloses upstream's `quickSetup`, which would otherwise create an admin whose password is literally `admin`.
+**Updating an existing Quantum install.** The historical migration repairs unfinished legacy-volume switches first. The new migration normalizes the BoltDB through the legacy image and writes the SQLite configuration, dropping the obsolete `server.port`. On the first normal start, upstream imports users, shares, access rules and signing state into `/database/filebrowser.sqlite`; it keeps the BoltDB and rebuilds the search index as needed. Reserve extra disk space and allow startup time for the import. Later starts use SQLite without reimporting the old data.
+
+The legacy repair keeps a displaced Quantum database as `filebrowser.quantum-<date>.db`. Colliding files or folders are renamed to `<name> (File Browser)` and logged rather than overwritten. A downgrade from SQLite is prohibited; the retained BoltDB does not contain any subsequent account or share changes.
+
+**Fresh install.** No migration runs, so the store is empty and a `critical` task blocks startup until Set Admin Password has been run. The action replaces upstream's automatically generated bootstrap credential with the password shown in StartOS.
 
 Either way the `chown` oneshot runs before the daemon on every start; a first start that fails is almost always a volume ownership problem it was meant to prevent.
 
@@ -128,8 +130,8 @@ Two actions, both user-facing.
 
 Creates or resets the `admin` user with a freshly generated password. Run it when the install task prompts, and any time you need to regain access.
 
-- **What it changes:** the `admin` user record in `filebrowser.db` — created if no user of that name exists, otherwise given the new password with its two-factor (TOTP) enrollment cleared — granting the admin permission, and `adminInitialized` in the package store.
-- **Availability:** only while the service is stopped. Quantum holds an exclusive lock on the database while running, and the CLI reports `the database is locked` against a live server.
+- **What it changes:** the `admin` user record in `filebrowser.sqlite` — created if no user of that name exists, otherwise given the new password with password login selected and its two-factor (TOTP) enrollment cleared — granting the admin permission, and `adminInitialized` in the package store.
+- **Operation:** runs `user set admin --password … --admin` against the stopped service's database. Keeping it stopped avoids concurrent updates to the server's write-through user cache.
 - **Confirmation:** once `adminInitialized` is set, asks before running, warning that the current password stops working and two-factor login is turned off. The first run on a fresh install, from the install task, does not ask.
 - **Cost:** seconds. It runs in a temporary subcontainer, so the password is never written to package state.
 - **Repeat safety:** safe to re-run; each run generates a fresh password and invalidates the previous one.
@@ -162,9 +164,9 @@ One check, on the only daemon.
 
 | Check     | Displayed       | Method                          |
 | --------- | --------------- | ------------------------------- |
-| `primary` | "Web Interface" | `GET /health` on the local port |
+| `primary` | "Web Interface" | `curl --fail` requests `/health` on the local port |
 
-The endpoint is registered on both the authenticated and the public router, so the check needs no credentials. It reflects "the HTTP server is up" rather than "indexing has finished" — search results stay incomplete for a while after the check first passes on a large volume, and that is expected rather than a fault.
+The endpoint returns HTTP success with a JSON `message` of `ok`, and needs no credentials. The check rejects HTTP errors rather than treating any response as ready. It reflects "the HTTP server is up" rather than "indexing has finished" — search results stay incomplete for a while after the check first passes on a large volume, and that is expected rather than a fault.
 
 A failure means the process is down or crash-looping. On a first start the likeliest cause is ownership on one of the four mounted volumes, which the `chown` oneshot exists to prevent: Quantum aborts on `cacheDir failed to create test file: permission denied` or `could not open database: permission denied`, and a `/srv` left root-owned instead lets browsing work while every write returns 403.
 
@@ -176,7 +178,7 @@ Three volumes are copied wholesale — `sdk.Backups.ofVolumes('data', 'database'
 - **Excluded:** `cache`. The search index, thumbnails and generated icons are all rebuilt on demand.
 - **Restore:** complete. Accounts and passwords come back as they were, so the install task does not reappear.
 
-**A backup taken before switching is the only route back to File Browser.** The conversion is one-way and destructive — File Browser cannot read the database once Quantum has rewritten it, and the package keeps no private copy of the original. This is why the switch alert, the release notes and the File Browser end-of-life notice all tell the user to take one first.
+**A backup taken before switching or updating is the only supported route back.** The intermediate conversion rewrites File Browser's BoltDB records. SQLite import retains that converted BoltDB, but does not write later changes back to it. Volume backups capture SQLite and its journals together, along with the retained import source; restoring a pre-SQLite backup runs the upgrade migrations again.
 
 Note the size implication: `data` is the whole file tree, so the backup is as large as what the user has stored.
 
@@ -188,7 +190,7 @@ Note the size implication: `data` is the whole file tree, so the backup is as la
 4. **Shell commands and runners are gone.** Upstream removed them deliberately and says they will not return.
 5. **The switch is one-way.** No reverse edge is published, so StartOS refuses an install of the unflavored line over this one. The refusal is clean — it happens before any data is touched and the service is rolled back — but the only way to run File Browser again is to restore a backup taken before switching.
 6. **Quantum never appears on the Updates page for a File Browser install.** Flavors are incomparable rather than ordered, so the switch is something the user chooses — which is correct here, because it widens permissions on restricted accounts.
-7. **The 2.x line is not packaged.** It is beta, it replaces BoltDB with SQLite, and its migration path silently strips the admin flag from a File Browser database; upstream recommends the packaged line for production.
+7. **SQLite updates cannot be downgraded in place.** Restore a pre-update backup instead; the retained BoltDB is an import source, not a live mirror.
 8. **No riscv64 build.** x86_64 and aarch64 only.
 
 ---
@@ -204,19 +206,19 @@ architectures:
 subcontainers:
   - filebrowser-sub # the running daemon, and the chown oneshot
   - setadmin # temporary; the Set Admin Password action
+  - convert-filebrowser # temporary; legacy BoltDB normalization during migration
 volumes:
   data: /srv
   database: /database
   config: /config
   cache: /cache
-  main: null # not mounted; the switch migration empties what 0.3.5.1 left there
+  main: null # not mounted; the switch migration adopts legacy data
 file_models:
   - /config/config.yaml
   - /config/startos.json
 startos_managed_env_vars:
   - FILEBROWSER_CONFIG
-  - FILEBROWSER_DATABASE
-  - FILEBROWSER_DISABLE_AUTOMATIC_BACKUP
+  - FILEBROWSER_DATABASE_PATH
 dependencies: []
 interfaces:
   ui: { type: ui, port: 8080 } # web UI, and WebDAV at /dav

@@ -18,8 +18,7 @@ export const setAdminPassword = sdk.Action.withoutInput(
   async ({ effects }) => ({
     name: i18n('Set Admin Password'),
     description: i18n('Create or reset your admin user and password'),
-    // Quantum holds an exclusive lock on the database while it runs, so the
-    // CLI cannot reach it until the service is stopped.
+    // CLI updates must not race the server's write-through user cache.
     allowedStatuses: 'only-stopped',
     warning: (await storeJson.read((s) => s.adminInitialized).const(effects))
       ? i18n(
@@ -42,16 +41,20 @@ export const setAdminPassword = sdk.Action.withoutInput(
       async (sub) => {
         // On a fresh install the daemon's chown oneshot has not run yet.
         await sub.execFail(chownCommand, { user: 'root', timeout: null })
-        // `-u` must come first: the subcommand reads it positionally.
-        await sub.execFail([
-          'filebrowser',
-          'set',
-          '-u',
-          `${adminUsername},${password}`,
-          '-a',
-          '-c',
-          configFile,
-        ])
+        await sub.execFail(
+          [
+            'filebrowser',
+            'user',
+            'set',
+            adminUsername,
+            '--password',
+            password,
+            '--admin',
+            '-c',
+            configFile,
+          ],
+          { timeout: null },
+        )
       },
     )
 

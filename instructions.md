@@ -2,8 +2,7 @@
 
 ## Documentation
 
-- [FileBrowser Quantum documentation](https://filebrowserquantum.com/) — the upstream manual. It defaults to the newer 2.x line; this package ships 1.5.x, so use the pages marked **v1.5.x** wherever both exist.
-- [Migration from the original FileBrowser](https://filebrowserquantum.com/en/docs/getting-started/migration/) — what does and does not carry over.
+- [FileBrowser Quantum documentation](https://filebrowserquantum.com/) — the upstream manual.
 
 ## What you get on StartOS
 
@@ -25,6 +24,14 @@ If you already run File Browser, this is the same marketplace listing — open i
 Access rules also have to be recreated, and File Browser's shell commands are gone for good — the developer removed them on purpose.
 
 **Take a StartOS backup before switching.** The switch is one-way — File Browser is no longer maintained, so StartOS will not let you go back to it. If you change your mind later, restoring that backup is the only way to run File Browser again. Your files themselves are not at risk either way; what the backup protects is your user accounts and settings.
+
+## Updating FileBrowser Quantum
+
+**Take a backup before updating.** The first start imports your existing accounts and settings into the new database format. Allow extra time and disk space for this and for rebuilding the search index. Sign in with your existing credentials, then check other users' folder permissions and your share links.
+
+The update also adds activity logs and per-source file permissions in the web interface. If you use scripts that call the download API, check the upstream migration guide for the changed routes.
+
+Going back requires restoring your pre-update backup. The retained old database does not receive any changes made after updating.
 
 ## Getting set up
 
@@ -52,6 +59,6 @@ WebDAV is served at `/dav` on the same address as the web interface, so you can 
 
 ### Actions
 
-**Set Admin Password** — generates a new random password for the `admin` account. Use it on a fresh install, or any time you want to rotate the credential. FileBrowser Quantum must be stopped to run it, because it holds a lock on its database while running. Once an admin password exists, it asks you to confirm first, because the current password stops working and any two-factor login on the `admin` account is turned off.
+**Set Admin Password** — generates a new random password for the `admin` account. Use it on a fresh install, or any time you want to rotate the credential. FileBrowser Quantum must be stopped to run it, to avoid racing the running server's cached account settings. Once an admin password exists, it asks you to confirm first, because the current password stops working and any two-factor login on the `admin` account is turned off.
 
 **Set Session Timeout** — how many hours you stay signed in before your browser session ends and you have to log in again. Defaults to 12 hours. If you switched from File Browser, your existing setting is carried over. Changing it restarts the service, which signs everyone out once.

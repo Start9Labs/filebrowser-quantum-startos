@@ -2,7 +2,7 @@ import { setupManifest } from '@start9labs/start-sdk'
 import { long, short, switchAlert } from './i18n'
 
 const dockerImage = 'gtstef/filebrowser'
-const dockerVersion = '1.5.8-stable'
+const dockerVersion = '2.0.0-stable'
 
 export const manifest = setupManifest({
   id: 'filebrowser',
@@ -21,6 +21,12 @@ export const manifest = setupManifest({
   // where a File Browser converted from StartOS 0.3.5.1 keeps its data.
   volumes: ['data', 'database', 'config', 'cache', 'main'],
   images: {
+    legacy: {
+      source: {
+        dockerTag: `${dockerImage}:1.5.8-stable`,
+      },
+      arch: ['x86_64', 'aarch64'],
+    },
     filebrowser: {
       source: {
         dockerTag: `${dockerImage}:${dockerVersion}`,
