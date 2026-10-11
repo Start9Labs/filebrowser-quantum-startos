@@ -25,14 +25,6 @@ Access rules also have to be recreated, and File Browser's shell commands are go
 
 **Take a StartOS backup before switching.** The switch is one-way — File Browser is no longer maintained, so StartOS will not let you go back to it. If you change your mind later, restoring that backup is the only way to run File Browser again. Your files themselves are not at risk either way; what the backup protects is your user accounts and settings.
 
-## Updating FileBrowser Quantum
-
-**Take a backup before updating.** The first start imports your existing accounts and settings into the new database format. Allow extra time and disk space for this and for rebuilding the search index. Sign in with your existing credentials, then check other users' folder permissions and your share links.
-
-The update also adds activity logs and per-source file permissions in the web interface. If you use scripts that call the download API, check the upstream migration guide for the changed routes.
-
-Going back requires restoring your pre-update backup. The retained old database does not receive any changes made after updating.
-
 ## Getting set up
 
 If you're **switching from File Browser**, there is nothing to do: start it and sign in with your existing credentials.
