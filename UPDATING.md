@@ -36,6 +36,6 @@ For minor and major updates, check the config schema against the tag you are pin
 
 The `legacy` image stays pinned to `1.5.8-stable`: it converts original File Browser BoltDB records before the SQLite importer runs. Do not bump it alongside the application. Direct SQLite import cannot translate original File Browser's `perm` fields; the intermediate conversion keeps admin rights and passwords. The new database is `/database/filebrowser.sqlite`; the original BoltDB remains at `/database/filebrowser.db`. Set `server.database.migrateFrom` only when that BoltDB is present, since upstream rejects a missing import source even after SQLite exists.
 
-The outgoing version carries a data migration, so apply the guide's historical-version rule before replacing `current.ts`. Keep the legacy volume repair in its original version and the sidegrade edge on `current`.
+The SQLite data migration belongs to `v2.0.0-stable_0-quantum.ts`; keep it and the legacy volume repair in their original versions. Apply the guide's historical-version rule if the outgoing version carries a new data migration, and keep the sidegrade edge on `current`.
 
 Whatever you do, do not add an `auth` block to the generated config: a non-empty `auth.adminPassword` makes Quantum reset that user's password on every start.
