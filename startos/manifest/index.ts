@@ -2,7 +2,7 @@ import { setupManifest } from '@start9labs/start-sdk'
 import { long, short, switchAlert } from './i18n'
 
 const dockerImage = 'gtstef/filebrowser'
-const dockerVersion = '2.0.1-stable'
+const dockerVersion = '2.0.2-stable'
 
 export const manifest = setupManifest({
   id: 'filebrowser',
