@@ -45,6 +45,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
         display: i18n('Web Interface'),
         fn: () =>
           sdk.healthCheck.runHealthScript(healthCommand, subcontainer, {
+            message: () => i18n('The web interface is ready'),
             errorMessage: i18n('The web interface is not ready'),
           }),
       },
