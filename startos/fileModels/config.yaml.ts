@@ -16,7 +16,7 @@ const loggingSchema = z.looseObject({
 
 const sourceSchema = z.looseObject({
   path: z.literal(dataPath).catch(dataPath),
-  name: z.literal('Files').catch('Files'),
+  name: z.literal('Data').catch('Data'),
 })
 
 const httpSchema = z.looseObject({
