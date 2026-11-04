@@ -34,6 +34,7 @@ export const current = VersionInfo.of({
   migrations: {
     up: async () => {},
     down: IMPOSSIBLE,
+    // The only way in from File Browser; keep it on whichever version is current.
     other: {
       ['^2']: {
         up: async ({ effects }) => {
@@ -44,4 +45,5 @@ export const current = VersionInfo.of({
       },
     },
   },
+  // The latest published unflavored File Browser version, which dependents' unflavored ranges accept.
 }).satisfies('2.63.23:4')
