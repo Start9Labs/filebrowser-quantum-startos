@@ -3,18 +3,18 @@ import { convertFileBrowserDatabase, migrateSQLiteConfig } from '../utils'
 import { switchFromFileBrowser } from './v1.5.8-stable_1-quantum'
 
 export const current = VersionInfo.of({
-  version: '#quantum:2.0.2-stable:3',
+  version: '#quantum:2.0.2-stable:4',
   releaseNotes: {
     en_US:
-      'Requires StartOS 0.4.1 or later. Fixes memory use growing while the service runs.',
+      'Requires StartOS 0.4.1 or later. The password from Set Admin Password works at first login without having to be changed.',
     es_ES:
-      'Requiere StartOS 0.4.1 o posterior. Corrige el aumento del uso de memoria mientras el servicio está en ejecución.',
+      'Requiere StartOS 0.4.1 o posterior. La contraseña de Establecer contraseña de administrador funciona en el primer inicio de sesión sin tener que cambiarla.',
     de_DE:
-      'Erfordert StartOS 0.4.1 oder neuer. Behebt einen während der Laufzeit des Dienstes ansteigenden Speicherverbrauch.',
+      'Erfordert StartOS 0.4.1 oder neuer. Das Passwort aus „Administrator-Passwort festlegen“ funktioniert bei der ersten Anmeldung, ohne dass es geändert werden muss.',
     pl_PL:
-      'Wymaga StartOS 0.4.1 lub nowszego. Naprawia wzrost zużycia pamięci podczas działania usługi.',
+      'Wymaga StartOS 0.4.1 lub nowszego. Hasło z akcji Ustaw hasło administratora działa przy pierwszym logowaniu bez konieczności jego zmiany.',
     fr_FR:
-      "Nécessite StartOS 0.4.1 ou une version ultérieure. Corrige l'augmentation de la consommation de mémoire pendant le fonctionnement du service.",
+      'Nécessite StartOS 0.4.1 ou une version ultérieure. Le mot de passe défini par Définir le mot de passe administrateur fonctionne dès la première connexion, sans devoir être changé.',
   },
   migrations: {
     up: async () => {},
