@@ -53,7 +53,11 @@ export const setAdminPassword = sdk.Action.withoutInput(
             '-c',
             configFile,
           ],
-          { timeout: null },
+          {
+            // Otherwise the admin the CLI bootstraps on an empty database must change its password at first login.
+            env: { FILEBROWSER_ADMIN_PASSWORD: password },
+            timeout: null,
+          },
         )
       },
     )
