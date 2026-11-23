@@ -45,6 +45,26 @@ The search box returns results as you type once the index has been built. On a l
 
 Create accounts for other people from the settings menu, and give each one the folders they should see.
 
+### Where your files are
+
+The first thing you see is a short list of folders. **Data** holds the files FileBrowser Quantum keeps for you, and is where everything lived before shared volumes existed. Beside it is one folder for each shared volume you have given the service. This top level is fixed: you cannot create, rename or delete anything in it. Open a folder to work inside it.
+
+### Browsing shared volumes
+
+A shared volume is a folder StartOS manages outside any one service — on your server's drive, an external drive, or a network share — so that several services can use the same files. FileBrowser Quantum can browse the ones you give it.
+
+1. In StartOS, open **System → Shared Volumes** and create a volume, or pick one you already have.
+2. Give FileBrowser Quantum access to it, either there or on this service's **Shared Volumes** tab. **Read** lets people browse and download; **Read/write** also lets them upload, rename and delete.
+3. FileBrowser Quantum restarts by itself, and the volume appears as a folder beside **Data**, under the volume's name.
+
+Things to know before you grant one:
+
+- **Anyone who can see everything will see it.** Accounts see the whole top level unless you limited them. To keep someone out of your shared volumes, edit their account in the settings menu and set their folder to **Data**, or to a folder inside it, before you grant the volume.
+- **Renaming a volume in StartOS renames its folder** the next time the service restarts. Share links and account folder limits that pointed into it stop working and need to be set again.
+- **Changing or removing access restarts the service**, which takes a few seconds.
+- **If a volume is offline** — an unplugged drive, a network share that is down — FileBrowser Quantum keeps running without it and the **Shared Volumes** health check names what is missing.
+- **Back the volume up separately.** A backup of FileBrowser Quantum covers **Data** and your accounts, not the files on shared volumes; select the volume itself when you create a StartOS backup.
+
 ### Connecting as a network drive
 
 WebDAV is served at `/dav` on the same address as the web interface, so you can map your files as a drive in Windows Explorer, macOS Finder, or a Linux file manager. Sign in with your FileBrowser Quantum username and password.

@@ -4,7 +4,7 @@ import {
   cachePath,
   databaseFile,
   legacyDatabaseFile,
-  dataPath,
+  rootPath,
   defaultSessionHours,
   uiPort,
 } from '../utils'
@@ -14,9 +14,11 @@ const loggingSchema = z.looseObject({
   output: z.literal('stdout').catch('stdout'),
 })
 
+// The name is only a label: Quantum keys accounts, shares and access rules by
+// the source's path. "Files" is unusable, it collides with the /files route.
 const sourceSchema = z.looseObject({
-  path: z.literal(dataPath).catch(dataPath),
-  name: z.literal('Data').catch('Data'),
+  path: z.literal(rootPath).catch(rootPath),
+  name: z.literal('Storage').catch('Storage'),
 })
 
 const httpSchema = z.looseObject({
@@ -35,7 +37,10 @@ const serverSchema = z.looseObject({
   cacheDir: z.literal(cachePath).catch(cachePath),
   // StartOS owns updates; upstream otherwise polls GitHub on a timer.
   disableUpdateCheck: z.literal(true).catch(true),
-  sources: z.array(sourceSchema).catch(() => [sourceSchema.parse({})]),
+  sources: z
+    .array(sourceSchema)
+    .length(1)
+    .catch(() => [sourceSchema.parse({})]),
   logging: z.array(loggingSchema).catch(() => [loggingSchema.parse({})]),
 })
 
