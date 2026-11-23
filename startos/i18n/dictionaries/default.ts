@@ -6,6 +6,9 @@ const dict = {
   'Web Interface': 1,
   'The web interface is ready': 2,
   'The web interface is not ready': 3,
+  'Shared Volumes': 19,
+  'Not available: ${names}': 20,
+  'Shown as folders beside Data: ${names}': 21,
 
   // interfaces.ts
   'Web UI': 4,

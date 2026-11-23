@@ -21,6 +21,9 @@ export default {
     16: 'Determina cuánto dura una sesión del navegador antes de cerrarse automáticamente',
     17: 'Crea la contraseña de tu usuario administrador',
     18: 'Asigna una contraseña nueva a la cuenta admin y desactiva su inicio de sesión en dos pasos; si la cuenta no existe, la crea. Cualquier contraseña que tuviera deja de funcionar y la nueva se muestra una sola vez.',
+    19: 'Volúmenes compartidos',
+    20: 'No disponibles: ${names}',
+    21: 'Se muestran como carpetas junto a Data: ${names}',
   },
   de_DE: {
     0: 'FileBrowser Quantum wird gestartet',
@@ -42,6 +45,9 @@ export default {
     16: 'Legen Sie fest, wie lange eine Browsersitzung dauert, bevor sie automatisch beendet wird',
     17: 'Legen Sie das Passwort Ihres Administrator-Benutzers fest',
     18: 'Vergibt dem Konto admin ein neues Passwort und schaltet seine Zwei-Faktor-Anmeldung ab; existiert das Konto nicht, wird es angelegt. Ein bisheriges Passwort funktioniert dann nicht mehr, und das neue wird nur einmal angezeigt.',
+    19: 'Geteilte Volumes',
+    20: 'Nicht verfügbar: ${names}',
+    21: 'Als Ordner neben Data angezeigt: ${names}',
   },
   pl_PL: {
     0: 'Uruchamianie FileBrowser Quantum',
@@ -63,6 +69,9 @@ export default {
     16: 'Określ, jak długo trwa sesja przeglądarki, zanim zostanie automatycznie zakończona',
     17: 'Utwórz hasło konta administratora',
     18: 'Nadaje kontu admin nowe hasło i wyłącza jego logowanie dwuskładnikowe, a jeśli konto nie istnieje, tworzy je. Dotychczasowe hasło przestaje działać, a nowe jest wyświetlane tylko raz.',
+    19: 'Woluminy współdzielone',
+    20: 'Niedostępne: ${names}',
+    21: 'Widoczne jako foldery obok Data: ${names}',
   },
   fr_FR: {
     0: 'Démarrage de FileBrowser Quantum',
@@ -84,5 +93,8 @@ export default {
     16: 'Déterminez la durée d’une session de navigateur avant sa fermeture automatique',
     17: 'Créez le mot de passe de votre utilisateur administrateur',
     18: 'Attribue un nouveau mot de passe au compte admin et désactive sa connexion à deux facteurs, en créant le compte s’il n’existe pas. Tout mot de passe précédent cesse de fonctionner, et le nouveau n’est affiché qu’une seule fois.',
+    19: 'Volumes partagés',
+    20: 'Indisponibles : ${names}',
+    21: 'Affichés comme dossiers à côté de Data : ${names}',
   },
 } satisfies Record<string, LangDict>

@@ -20,10 +20,20 @@ export const manifest = setupManifest({
   // `data` is load-bearing: eight sibling packages mount it by name. `main` is
   // where a File Browser converted from StartOS 0.3.5.1 keeps its data.
   volumes: ['data', 'database', 'config', 'cache', 'main'],
+  sharedVolumes: true,
   images: {
     legacy: {
       source: {
         dockerTag: `${dockerImage}:1.5.8-stable`,
+      },
+      arch: ['x86_64', 'aarch64'],
+    },
+    sqlite: {
+      source: {
+        dockerBuild: {
+          workdir: '.',
+          dockerfile: './sqlite.Dockerfile',
+        },
       },
       arch: ['x86_64', 'aarch64'],
     },
